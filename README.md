@@ -1,2 +1,2 @@
-# spooler_restarter
-An alternative utility for restarting the print manager service, recording its work in the Windows logs.
+# Spooler restarter
+Альтернативнативна утиліта для перезапуску служби "Диспетчер друку", після закінчення своєї роботи робиться запис до системного журналу Windows, в розділ "Aplications"
