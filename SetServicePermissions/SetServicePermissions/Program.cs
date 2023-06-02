@@ -1,4 +1,5 @@
-﻿using System;
+﻿// TODO добавить в описание Readme.md ссылку на источник иконки с https://icons8.com
+using System;
 using System.Diagnostics;
 using System.Security.Principal;
 
@@ -15,10 +16,7 @@ namespace SetServicePermissions
                 return;
             }
 
-            // TODO Цю частину коду потрібно переробити
-            Console.WriteLine("Текущие права службы");
             string currentPermissions = GetServicePermissions("spooler");
-            Console.WriteLine(currentPermissions);
 
             if (IsServicePermissionSet(currentPermissions))
             {
@@ -26,22 +24,22 @@ namespace SetServicePermissions
             }
             else
             {
-                Console.WriteLine("Устанавливаем права на запуск службы");
+                Console.WriteLine("Текущие права службы:");
+                Console.WriteLine(currentPermissions);
+                
+                Console.WriteLine("\nУстанавливаем права на запуск службы");
                 SetServicePermissions("spooler");
             }
 
-            Console.WriteLine("Проверяем еще раз, чтобы убедиться, что права изменились");
-            string updatedPermissions = GetServicePermissions("spooler");
-            Console.WriteLine(updatedPermissions);
-
+            Console.WriteLine("Нажмите клавишу Enter для выхода.");
             Console.ReadLine();
         }
 
         /// <summary>
-        /// 
+        /// Метод получающий теущий уровень разрешения доступа к службе.
         /// </summary>
         /// <param name="serviceName"></param>
-        /// <returns></returns>
+        /// <returns>Строку с набором символов с синтаксисом Security Description Definition Language</returns>
         static string GetServicePermissions(string serviceName)
         {
             string command = $"sc sdshow {serviceName}";
@@ -49,7 +47,7 @@ namespace SetServicePermissions
         }
 
         /// <summary>
-        /// 
+        /// Метод для установки прав на менипуляции со службой используя синтаксис Security Description Definition Language
         /// </summary>
         /// <param name="serviceName"></param>
         static void SetServicePermissions(string serviceName)
@@ -59,7 +57,7 @@ namespace SetServicePermissions
         }
 
         /// <summary>
-        /// 
+        /// Метод для выполнения команд через командную строку Windows
         /// </summary>
         /// <param name="command"></param>
         /// <returns></returns>
@@ -79,18 +77,18 @@ namespace SetServicePermissions
         }
 
         /// <summary>
-        /// 
+        /// Метод поиска подстроки указывающей на наличие уже установленного доступа на остановку и запуск службы
         /// </summary>
         /// <param name="permissionsOutput"></param>
-        /// <returns></returns>
+        /// <returns>true - если доступ уже предоставлен, false - если нет</returns>
         static bool IsServicePermissionSet(string permissionsOutput)
         {
             // Проверяем наличие определенной строки в выводе команды
-            return permissionsOutput.Contains("(A;;0x30;;;WD)(A;;CCLCSWLOCRRC;;;AU)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWRPWPDTLOCRRC;;;SY)S:(AU;FA;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;WD)");
+            return permissionsOutput.Contains("(A;;RPWP;;;WD)");
         }
 
         /// <summary>
-        /// 
+        /// Метод для проверки, запущен ли код с правами администратора
         /// </summary>
         /// <returns></returns>
         static bool IsRunAsAdmin()
@@ -101,7 +99,7 @@ namespace SetServicePermissions
         }
 
         /// <summary>
-        /// 
+        /// Метод для перезпуска программы с запросом предоставить права администратора
         /// </summary>
         static void RestartAsAdmin()
         {
