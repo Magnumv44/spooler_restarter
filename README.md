@@ -1,3 +1,4 @@
+![.NET 6.0](https://img.shields.io/badge/.NET-6.0-brightgreen)
 # Spooler restarter
 Альтернативна утиліта для перезапуску служби "Диспетчер друку", після закінчення своєї роботи робиться запис до системного журналу Windows, в розділ "Aplications".
 
