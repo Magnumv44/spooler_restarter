@@ -1,5 +1,4 @@
-﻿// TODO добавить в описание Readme.md ссылку на источник иконки с https://icons8.com
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Security.Principal;
 
@@ -11,7 +10,7 @@ namespace SetServicePermissions
         {
             if (!IsRunAsAdmin())
             {
-                // Если программа не запущена с правами администратора, перезапускаем ее с правами администратора
+                // Якщо програма не запущена від імені адміністратора системи, робимо перезапуск з запитом цих прав.
                 RestartAsAdmin();
                 return;
             }
@@ -24,42 +23,47 @@ namespace SetServicePermissions
             }
             else
             {
-                Console.WriteLine("Текущие права службы:");
-                Console.WriteLine(currentPermissions);
-                
                 Console.WriteLine("\nУстанавливаем права на запуск службы");
                 SetServicePermissions("spooler");
             }
 
+            // Викликаємо метод перевірки доступу до джерела подій в журналі
+            EventLogSourceCheck();
+            
             Console.WriteLine("Нажмите клавишу Enter для выхода.");
             Console.ReadLine();
         }
 
+        #region GetServicePermissions
         /// <summary>
-        /// Метод получающий теущий уровень разрешения доступа к службе.
+        /// Метод, що отримує поточні значення дозволу доступу до служби.
         /// </summary>
-        /// <param name="serviceName"></param>
-        /// <returns>Строку с набором символов с синтаксисом Security Description Definition Language</returns>
+        /// <param name="serviceName">Нарзву необхідної служби в форматі string</param>
+        /// <returns>Строку з набором символів у вигляді синтаксису Security Description Definition Language</returns>
         static string GetServicePermissions(string serviceName)
         {
             string command = $"sc sdshow {serviceName}";
             return ExecuteCommand(command);
         }
+        #endregion
 
+        #region SetServicePermissions
         /// <summary>
-        /// Метод для установки прав на менипуляции со службой используя синтаксис Security Description Definition Language
+        /// Метод для встановлення прав на зміну стану служби вокристовуючи синтаксис Security Description Definition Language
         /// </summary>
-        /// <param name="serviceName"></param>
+        /// <param name="serviceName">Нарзву необхідної служби в форматі string</param>
         static void SetServicePermissions(string serviceName)
         {
             string command = $"sc sdset {serviceName} D:(A;;0x30;;;WD)(A;;CCLCSWLOCRRC;;;AU)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWRPWPDTLOCRRC;;;SY)S:(AU;FA;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;WD)";
             ExecuteCommand(command);
         }
+        #endregion
 
+        #region ExecuteCommand
         /// <summary>
-        /// Метод для выполнения команд через командную строку Windows
+        /// Метод для вконання команд через командну строку Windows
         /// </summary>
-        /// <param name="command"></param>
+        /// <param name="command">Код команди в форматі string</param>
         /// <returns></returns>
         static string ExecuteCommand(string command)
         {
@@ -75,31 +79,37 @@ namespace SetServicePermissions
             string output = process.StandardOutput.ReadToEnd();
             return output;
         }
+        #endregion
 
+        #region IsServicePermissionSet
         /// <summary>
-        /// Метод поиска подстроки указывающей на наличие уже установленного доступа на остановку и запуск службы
+        /// Метод пошуку пыдстроки, що вказує чи були надані права на зміну стану служби, або ні.
         /// </summary>
         /// <param name="permissionsOutput"></param>
-        /// <returns>true - если доступ уже предоставлен, false - если нет</returns>
+        /// <returns>true - якщо доступ вже надано, false - якщо ні</returns>
         static bool IsServicePermissionSet(string permissionsOutput)
         {
-            // Проверяем наличие определенной строки в выводе команды
+            // Перевіряємо, чи містить вхідна строка необхідну підстроку
             return permissionsOutput.Contains("(A;;RPWP;;;WD)");
         }
+        #endregion
 
+        #region IsRunAsAdmin
         /// <summary>
-        /// Метод для проверки, запущен ли код с правами администратора
+        /// Метод, що перевіряє чи було запущено програму з правами адміністратора системи.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>true - якщо так, false - якщо ні</returns>
         static bool IsRunAsAdmin()
         {
             WindowsIdentity identity = WindowsIdentity.GetCurrent();
             WindowsPrincipal principal = new WindowsPrincipal(identity);
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
+        #endregion
 
+        #region RestartAsAdmin
         /// <summary>
-        /// Метод для перезпуска программы с запросом предоставить права администратора
+        /// Метод для для перезапуска програмі за запитом надати права адміністратора системи.
         /// </summary>
         static void RestartAsAdmin()
         {
@@ -107,8 +117,7 @@ namespace SetServicePermissions
             startInfo.UseShellExecute = true;
             startInfo.WorkingDirectory = Environment.CurrentDirectory;
             startInfo.FileName = Process.GetCurrentProcess().MainModule.FileName;
-            startInfo.Verb = "runas"; // Запуск процесса с правами администратора
-
+            startInfo.Verb = "runas"; // Запуск процесу з правами адміністратора
             try
             {
                 Process.Start(startInfo);
@@ -118,5 +127,29 @@ namespace SetServicePermissions
                 Console.WriteLine("Ошибка перезапуска программы с правами администратора: " + ex.Message);
             }
         }
+        #endregion
+
+        #region EventLogSourceCheck
+        /// <summary>
+        /// Метод перевірки наявності джерела подій в журналі, та в разі необхідності, його створення
+        /// </summary>
+        static void EventLogSourceCheck()
+        {
+            string sourceForLog = "SpoolerRestarter";
+            string logName = "Application";
+
+            // Перевіряємо, чи існує джерело журналу подій
+            if (!EventLog.SourceExists(sourceForLog))
+            {
+                // Створюємо нове джерело журналу подій
+                EventLog.CreateEventSource(sourceForLog, logName);
+                Console.WriteLine("Доступ предоставлен для журнала событий \"{0}\"", logName);
+            }
+            else
+            {
+                Console.WriteLine("Источник для журнала событий \"{0}\" уже существует", logName);
+            }
+        }
+        #endregion
     }
 }
