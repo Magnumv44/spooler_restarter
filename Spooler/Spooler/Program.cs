@@ -4,13 +4,10 @@ using System.ServiceProcess;
 
 ServiceController spoolService = new ServiceController("spooler");
 
-EventLog wrEventLog = new EventLog("Application");
-
 void EventLogWrite(string message, EventLogEntryType type, int codeEventId)
 {
     string sourceForLog = "SpoolerRestarter";
-    wrEventLog.Source = sourceForLog;
-    wrEventLog.WriteEntry(message, type, codeEventId);
+    EventLog.WriteEntry(sourceForLog, message, type, codeEventId);
 }
 
 try
